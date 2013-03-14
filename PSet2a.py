@@ -1,4 +1,4 @@
-balance = 5000
+balance = 500000
 annualInterestRate = 0.18
 monthlyPaymentRate = 0.02
 months = 0
@@ -8,24 +8,30 @@ months = 0
 #set initial values for b, r, p, tp
 b = balance
 r = annualInterestRate
-p = round(balance * monthlyPaymentRate, 2)
+p = balance * monthlyPaymentRate
 #totalAmountPaid
 tp = 0
 
 while months < 12:
     #unpaidBalance
-    ub = round( b - p , 2)
+    #if months == 11:
+       # m12ub = b
+    ub = b - p
     #monthlyInterest
-    i = round((r/12.0) * ub, 2)
+    i = (r/12.0) * ub
     tp += p
     print(i)
     print('Months: ' + str(months))
     print('Minimum monthly payment: ' + str(p))
-    print('Remaining balance: ' + str(ub))
+    
     #outStandingBalance for next month
-    b = round( (ub + i) , 2)
+    b =(ub + i)
+    if months != 11:
+        print('Remaining balance: ' + str(ub))
+    else:
+        print('Remaining balance: ' + str(b))
     #minimumAmountToPay for next month
-    p = round( b * monthlyPaymentRate , 2)
+    p =b * monthlyPaymentRate
     
     months += 1
     print('')
