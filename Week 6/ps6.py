@@ -46,12 +46,35 @@ def process(url):
 
 # Problem 1
 
-# TODO: NewsStory
+
+class NewsStory(object):
+    def __init__(self, guid, title, subject, summary, link):
+        self.GUID = guid
+        self.TITLE = title
+        self.SUBJECT = subject
+        self.SUMMARY = summary
+        self.LINK = link
+
+    def getGuid(self):
+        return self.GUID
+
+    def getTitle(self):
+        return self.TITLE
+
+    def getSubject(self):
+        return self.SUBJECT
+
+    def getSummary(self):
+        return self.SUMMARY
+
+    def getLink(self):
+        return self.LINK
 
 #======================
 # Part 2
 # Triggers
 #======================
+
 
 class Trigger(object):
     def evaluate(self, story):
@@ -64,25 +87,112 @@ class Trigger(object):
 # Whole Word Triggers
 # Problems 2-5
 
-# TODO: WordTrigger
 
-# TODO: TitleTrigger
-# TODO: SubjectTrigger
-# TODO: SummaryTrigger
+class WordTrigger(Trigger):
+    def __init__(self, word):
+        self.trigWord = word.lower()
+
+    def cleanText(self, text):
+        # takes in any text and returns a list of lowercase words
+        lsPunct = []
+        [lsPunct.append(c) for c in string.punctuation]
+        for l in text:
+            if l in lsPunct:
+                text = text.replace(l,' ')
+        text = text.lower()
+        text = text.split()
+        self.text = text
+        return self.text
+
+    def isWordIn(self, text):
+        text = self.cleanText(text)
+        if self.trigWord in text:
+            return True
+        else:
+            return False
+
+
+class TitleTrigger(WordTrigger):
+    def __init__(self, word):
+        WordTrigger.__init__(self, word)
+
+    def evaluate(self, story):
+        return self.isWordIn(story.getTitle())
+
+
+class SubjectTrigger(WordTrigger):
+    def __init__(self, word):
+        WordTrigger.__init__(self, word)
+
+    def evaluate(self, story):
+        return self.isWordIn(story.getSubject())
+
+
+class SummaryTrigger(WordTrigger):
+    def __init__(self, word):
+        WordTrigger.__init__(self, word)
+
+    def evaluate(self, story):
+        return self.isWordIn(story.getSummary())
 
 
 # Composite Triggers
 # Problems 6-8
 
-# TODO: NotTrigger
-# TODO: AndTrigger
-# TODO: OrTrigger
+
+class NotTrigger(Trigger):
+    def __init__(self, otherTrigger):
+        self.otherTrigger = otherTrigger
+
+    def evaluate(self, story):
+        return not self.otherTrigger.evaluate(story)
+
+
+class AndTrigger(Trigger):
+    def __init__(self, t1, t2):
+        self.t1 = t1
+        self.t2 = t2
+
+    def evaluate(self, story):
+        if self.t1.evaluate(story) and self.t2.evaluate(story):
+            return True
+        else:
+            return False
+
+
+class OrTrigger(Trigger):
+    def __init__(self, t1, t2):
+        self.t1 = t1
+        self.t2 = t2
+
+    def evaluate(self, story):
+        if self.t1.evaluate(story) or self.t2.evaluate(story):
+            return True
+        else:
+            return False
 
 
 # Phrase Trigger
 # Question 9
 
-# TODO: PhraseTrigger
+
+class PhraseTrigger(Trigger):
+    def __init__(self, phrase):
+        self.phrase = phrase
+
+    def getTexts(self):
+        self.lTexts = []
+        self.lTexts.append(self.story.getTitle())
+        self.lTexts.append(self.story.getSubject())
+        self.lTexts.append(self.story.getSummary())
+
+    def evaluate(self, story):
+        self.story = story
+        self.getTexts()
+        for text in self.lTexts:
+            if self.phrase in text:
+                return True
+        return False
 
 
 #======================
@@ -91,14 +201,15 @@ class Trigger(object):
 #======================
 
 def filterStories(stories, triggerlist):
-    """
-    Takes in a list of NewsStory instances.
+    # Takes in a list of NewsStory instances.
+    # Returns: a list of only the stories for which a trigger in triggerlist fires.
+    filteredStories = []
+    for story in stories:
+        for trigger in triggerlist:
+            if trigger.evaluate(story) and story not in filteredStories:
+                filteredStories.append(story)
 
-    Returns: a list of only the stories for which a trigger in triggerlist fires.
-    """
-    # TODO: Problem 10
-    # This is a placeholder (we're just returning all the stories, with no filtering) 
-    return stories
+    return filteredStories
 
 #======================
 # Part 4
@@ -120,8 +231,23 @@ def makeTrigger(triggerMap, triggerType, params, name):
 
     Returns a new instance of a trigger (ex: TitleTrigger, AndTrigger).
     """
-    # TODO: Problem 11
-
+    triggerTypes = {'TITLE':TitleTrigger, 'SUMMARY':SummaryTrigger,
+                    'SUBJECT':SubjectTrigger, 'PHRASE':PhraseTrigger,
+                    'NOT':NotTrigger, 'AND':AndTrigger, 'OR':OrTrigger}
+    extraParams = ['AND', 'OR']
+    for key in triggerTypes:
+        if triggerType == key:
+            trig = triggerTypes[key]
+    if triggerType == 'PHRASE':
+        trigger = trig(' '.join(params))
+    elif triggerType in extraParams:
+        trigger = trig(triggerMap[params[0]],triggerMap[params[1]])
+    elif triggerType == 'NOT':
+        trigger = trig(triggerMap[params[0]])
+    else:
+        trigger = trig(params[0])
+    triggerMap[name]= trigger
+    return trigger
 
 def readTriggerConfig(filename):
     """
@@ -170,66 +296,66 @@ SLEEPTIME = 60 #seconds -- how often we poll
 def main_thread(master):
     # A sample trigger list - you'll replace
     # this with something more configurable in Problem 11
-    try:
+    #try:
         # These will probably generate a few hits...
-        t1 = TitleTrigger("Obama")
-        t2 = SubjectTrigger("Romney")
-        t3 = PhraseTrigger("Election")
-        t4 = OrTrigger(t2, t3)
-        triggerlist = [t1, t4]
+        #t1 = TitleTrigger("Obama")
+        #t2 = SubjectTrigger("Romney")
+        #t3 = PhraseTrigger("Election")
+        #t4 = OrTrigger(t2, t3)
+        #triggerlist = [t1, t4]
         
-        # TODO: Problem 11
+
         # After implementing makeTrigger, uncomment the line below:
-        # triggerlist = readTriggerConfig("triggers.txt")
+    triggerlist = readTriggerConfig("triggers.txt")
 
-        # **** from here down is about drawing ****
-        frame = Frame(master)
-        frame.pack(side=BOTTOM)
-        scrollbar = Scrollbar(master)
-        scrollbar.pack(side=RIGHT,fill=Y)
-        
-        t = "Google & Yahoo Top News"
-        title = StringVar()
-        title.set(t)
-        ttl = Label(master, textvariable=title, font=("Helvetica", 18))
-        ttl.pack(side=TOP)
-        cont = Text(master, font=("Helvetica",14), yscrollcommand=scrollbar.set)
-        cont.pack(side=BOTTOM)
-        cont.tag_config("title", justify='center')
-        button = Button(frame, text="Exit", command=root.destroy)
-        button.pack(side=BOTTOM)
+    # **** from here down is about drawing ****
+    frame = Frame(master)
+    frame.pack(side=BOTTOM)
+    scrollbar = Scrollbar(master)
+    scrollbar.pack(side=RIGHT,fill=Y)
 
-        # Gather stories
-        guidShown = []
-        def get_cont(newstory):
-            if newstory.getGuid() not in guidShown:
-                cont.insert(END, newstory.getTitle()+"\n", "title")
-                cont.insert(END, "\n---------------------------------------------------------------\n", "title")
-                cont.insert(END, newstory.getSummary())
-                cont.insert(END, "\n*********************************************************************\n", "title")
-                guidShown.append(newstory.getGuid())
+    t = "Google & Yahoo Top News"
+    title = StringVar()
+    title.set(t)
+    ttl = Label(master, textvariable=title, font=("Helvetica", 18))
+    ttl.pack(side=TOP)
+    cont = Text(master, font=("Helvetica",14), yscrollcommand=scrollbar.set)
+    cont.pack(side=BOTTOM)
+    cont.tag_config("title", justify='center')
+    button = Button(frame, text="Exit", command=root.destroy)
+    button.pack(side=BOTTOM)
 
-        while True:
+    # Gather stories
+    guidShown = []
+    def get_cont(newstory):
+        if newstory.getGuid() not in guidShown:
+            cont.insert(END, newstory.getTitle()+"\n", "title")
+            cont.insert(END, "\n---------------------------------------------------------------\n", "title")
+            cont.insert(END, newstory.getSummary())
+            cont.insert(END, "\n*********************************************************************\n", "title")
+            guidShown.append(newstory.getGuid())
 
-            print "Polling . . .",
-            # Get stories from Google's Top Stories RSS news feed
-            stories = process("http://news.google.com/?output=rss")
+    while True:
 
-            # Get stories from Yahoo's Top Stories RSS news feed
-            stories.extend(process("http://rss.news.yahoo.com/rss/topstories"))
+        print "Polling . . .",
+        # Get stories from Google's Top Stories RSS news feed
+        stories = process("http://news.google.com/?output=rss")
 
-            # Process the stories
-            stories = filterStories(stories, triggerlist)
+        # Get stories from Yahoo's Top Stories RSS news feed
+        stories.extend(process("http://rss.news.yahoo.com/rss/topstories"))
 
-            map(get_cont, stories)
-            scrollbar.config(command=cont.yview)
+        # Process the stories
+        stories = filterStories(stories, triggerlist)
+
+        map(get_cont, stories)
+        scrollbar.config(command=cont.yview)
 
 
-            print "Sleeping..."
-            time.sleep(SLEEPTIME)
+        print "Sleeping..."
+        time.sleep(SLEEPTIME)
 
-    except Exception as e:
-        print e
+    #except Exception as e:
+    #    print e
 
 
 if __name__ == '__main__':
@@ -238,4 +364,3 @@ if __name__ == '__main__':
     root.title("Some RSS parser")
     thread.start_new_thread(main_thread, (root,))
     root.mainloop()
-

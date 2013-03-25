@@ -3,18 +3,18 @@
 # news stories!
 # Problem 11: 
 
-# subject trigger named t1
-t1 SUBJECT world
+#t1 SUBJECT world
+#t2 TITLE HuffintonPost
+#t3 PHRASE python
+#t4 TITLE court
+#t5 TITLE gay
+#t6 PHRASE weather
 
-# title trigger named t2
-t2 TITLE Intel
-
-# phrase trigger named t3
-t3 PHRASE New York City
-
-# composite trigger named t4
-t4 AND t2 t3
+t1 TITLE Manitoba
+t2 NOT t1
+t3 PHRASE British Colombia
+t4 NOT t3
 
 # the trigger set contains t1 and t4
-ADD t1 t4
+ADD t2 t4
 
